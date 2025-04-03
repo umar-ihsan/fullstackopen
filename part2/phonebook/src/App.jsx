@@ -1,6 +1,7 @@
-import { useState } from 'react'
-
-
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import personService from './services/person'
+import './index.css'
 
 
 const Filter = (props) => {
@@ -36,8 +37,9 @@ const FilteredPersons = (props) => {
     <div>
       {
       props.persons.map( person => (
-        <div key={person.name}>
-          <p>{person.name} - {person.number}</p>
+        <div key={person.id}>
+          <p>{person.id} - {person.name} - {person.number}</p> 
+          <button onClick={()=>props.delete(person)}>delete</button>
         </div>
 
       ))
@@ -46,30 +48,59 @@ const FilteredPersons = (props) => {
   )
 }
 
+const Notification = ({message}) => {
+  if (message === null){
+    return null
+  }
+
+  return (
+   <div className='success'>
+    {message}
+   </div>
+  )
+}
+
 const App = () => {
 
 
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas',
-      number: 1111
-     },
-     { name: 'Roshi ',
-      number: 2222
-     },
-  ]) 
+  const [persons, setPersons] = useState([]) 
+
+  useEffect(()=>{
+    personService.getAll().then(initialPersons=>setPersons(initialPersons))
+  },[])
 
 
   const addPerson = (event) => {
     event.preventDefault()
+    console.log(`newName is ${newName}`)
 
-    const exists = () =>(
+    const exists = () =>{
+      console.log(`newName is ${newName}`);
 
-      persons.some(person=> person.name === newName)
-    )
-
+      return persons.some(person=> person.name === newName)
+      
+    }
     if(exists()){
-      alert(`${newName} is already added in the phonebook.`)
-      return;
+      const confirm = window.confirm(`${newName} is already added in the phonebook.Do you want to update the number?`)
+      if(confirm){
+        const someperson = persons.find(person => person.name === newName)
+        console.log(someperson.id)
+        const updatedperson = {...someperson, number : newPhone}
+        personService.update(someperson.id,updatedperson).then(response =>{
+          setPersons(persons.map(person=> person.name === newName ? response : person))
+        }
+
+        ).then(()=>{
+          setMessage("Number updated successfully!")
+          setTimeout(()=>{setMessage(null)},5000)
+        }
+          
+        )
+      } else{
+        console.log("cancelled update")
+        return;
+      }
+      
     }
 
     const newPerson = {
@@ -77,7 +108,16 @@ const App = () => {
       number: newPhone
     }
 
-    setPersons(persons.concat(newPerson))
+    personService.create(newPerson).then(response=>{
+      setPersons(persons.concat(response))
+    }).then( ()=>{
+      setMessage("Person created successfully!")
+      setTimeout(()=>{setMessage(null)},5000)
+    }
+      
+    )
+
+    
     setNewName('')
     setNewPhone('')
 
@@ -86,6 +126,7 @@ const App = () => {
   const [search, setSearch] = useState('')
   const [newName, setNewName] = useState('')
   const [newPhone, setNewPhone] = useState('')
+  const [message, setMessage] = useState('')
 
   const handleSearch = (event) =>{
     setSearch(event.target.value)
@@ -102,15 +143,35 @@ const App = () => {
     setNewPhone(event.target.value)
   } 
 
+  const deletePerson = (delperson) =>{
+
+    const confirmation = window.confirm(`Are you sure you want to delete ${delperson.name}?`)
+
+    if(confirmation){
+
+      personService.del(delperson.id)
+    setPersons(persons.filter(person=>person.id !== delperson.id))
+    setMessage("Person deleted successfully!")
+    setTimeout(()=>{setMessage(null)},5000)
+
+    } else{
+      console.log("Deletion Cancelled")
+    }
+    
+    
+  }
+
   return (
     <div>
       <h2>Phonebook</h2>
+
+      <Notification message={message} />
      
       <Filter value = {search} onChange = {handleSearch} />
       <PersonForm onSubmit = {addPerson} nameValue = {newName} phoneValue = {newPhone} onNameChange = {addNewName} onPhoneChange = {addNewPhone} />
       
       <h2>Numbers</h2>
-      <FilteredPersons persons = {filteredPersons}/>
+      <FilteredPersons persons = {filteredPersons} delete = {deletePerson}/>
       ...
     </div>
   )
