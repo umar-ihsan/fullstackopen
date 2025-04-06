@@ -16,7 +16,7 @@ morgan.token('postData', (req) => {
   if (req.method === 'POST') {
     return JSON.stringify(req.body)
   }
-  return '' 
+  return ''
 })
 
 app.use(morgan(':method :url :status :postData'))
@@ -39,22 +39,22 @@ app.get('/info', (request, response, next) => {
         <div>
           <p>${currentDate} (${timeZone})</p>
         </div>`)
-    }). catch(error=> next(error))
+    }). catch(error => next(error))
 })
 
-app.put('/api/persons/:id',(request, response, next)=>{
+app.put('/api/persons/:id',(request, response, next) => {
 
   const personName = request.body.name
   const personNumber = request.body.number
-  
+
 
   if(!personName || !personNumber){
     return response.status(400).json({
       error: 'Person name or number missing.'
     })
   }
-    
-  Person.find({_id:request.params.id}).then(exists=>{
+
+  Person.find({ _id:request.params.id }).then(exists => {
 
     if(exists.length > 0){
 
@@ -62,22 +62,22 @@ app.put('/api/persons/:id',(request, response, next)=>{
         name: personName,
         number: personNumber
       })
-      person.save().then(result=> response.json(result)).catch(error=>(next(error)))
+      person.save().then(result => response.json(result)).catch(error => (next(error)))
     }
 
 
-  }).catch(error=>(next(error)))
+  }).catch(error => (next(error)))
 
 })
 
 app.get('/api/persons', (request, response, next) => {
 
-  Person.find({}).then(result=> response.json(result)).catch(error=>next(error))
+  Person.find({}).then(result => response.json(result)).catch(error => next(error))
 })
 
 app.get('/api/persons/:id', (request, response, next) => {
   Person.findById(request.params.id)
-    .lean() 
+    .lean()
     .then((person) => {
       if (!person) {
         return response.status(404).json({
@@ -97,49 +97,49 @@ app.post('/api/persons', (request, response, next) => {
 
   const personName = request.body.name
   const personNumber = request.body.number
-  
+
 
   if(!personName || !personNumber){
     return response.status(400).json({
       error: 'Person name or number missing.'
     })
   }
-    
-  Person.find({name:personName}).then(exists=>{
+
+  Person.find({ name:personName }).then(exists => {
 
     if(exists.length > 0){
       return response.status(400).json({
         error: `${personName} already exists in the phonebook.`
       })
     }
-    
+
     let person = new Person({
       name: personName,
       number: personNumber
     })
 
-    person.save().then(result=> response.json(result)).catch(error=>(next(error)))
+    person.save().then(result => response.json(result)).catch(error => (next(error)))
 
-  }).catch(error=>(next(error)))
+  }).catch(error => (next(error)))
 
-    
+
 })
 
-app.delete('/api/persons/:id', (request, response, next)=>{
+app.delete('/api/persons/:id', (request, response, next) => {
 
   const Id = request.params.id
-  Person.findOneAndDelete({_id:Id}).then(result=>{
+  Person.findOneAndDelete({ _id:Id }).then(result => {
 
     if(!result){
       return response.status(400).json({
         error: 'Person not found.'
       })
     }
-    
+
     response.json(result)
-        
-  }).catch(error=>next(error))
-  
+
+  }).catch(error => next(error))
+
 })
 
 

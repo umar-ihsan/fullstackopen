@@ -38,15 +38,15 @@ module.exports = Person
 
 
 
-if (process.argv.length == 3) {
+if (process.argv.length === 3) {
   console.log('inside if')
-  Person.find({}).then(result=>{
+  Person.find({}).then(result => {
     result.forEach(person => {
       console.log(person)
-      
+
     })
 
-    mongoose.connection.close()   
+    mongoose.connection.close()
   })}
 
 if (process.argv.length > 3){
@@ -56,7 +56,7 @@ if (process.argv.length > 3){
     name: process.argv[3],
     number: process.argv[4]
   })
-      
+
   person.save().then(() => {
     console.log(`added ${person.name} number ${person.number} to phonebook.`)
     mongoose.connection.close()
