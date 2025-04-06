@@ -62,7 +62,7 @@ app.put('/api/persons/:id',(request, response, next)=>{
           name: personName,
           number: personNumber
         })
-        person.save().then(result=> response.json(result))
+        person.save().then(result=> response.json(result)).catch(error=>(next(error)))
     }
 
 
@@ -93,7 +93,7 @@ app.get('/api/persons/:id', (request, response, next) => {
     });
 });
 
-app.post('/api/persons', (request, response, error) => {
+app.post('/api/persons', (request, response, next) => {
 
     const personName = request.body.name
     const personNumber = request.body.number
@@ -118,7 +118,7 @@ app.post('/api/persons', (request, response, error) => {
       number: personNumber
     })
 
-    person.save().then(result=> response.json(result))
+    person.save().then(result=> response.json(result)).catch(error=>(next(error)))
 
     }).catch(error=>(next(error)))
 
@@ -144,14 +144,15 @@ app.delete('/api/persons/:id', (request, response, next)=>{
 
 
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
-
+  console.error('Full Error:', error)  // Log the full error object, including stack trace
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
-  } 
-
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
   next(error)
 }
+
 
 // this has to be the last loaded middleware, also all the routes should be registered before this!
 app.use(errorHandler)
