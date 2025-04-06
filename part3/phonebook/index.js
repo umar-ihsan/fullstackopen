@@ -1,25 +1,25 @@
 require('dotenv').config()
 const express = require('express')
-const cors = require('cors');
-var morgan = require('morgan');
+const cors = require('cors')
+var morgan = require('morgan')
 const Person = require('./models/person')
 
 const app = express()
 
-app.use(cors());
+app.use(cors())
 app.use(express.static('dist'))
-app.use(express.json());
-app.use(morgan('tiny'));
+app.use(express.json())
+app.use(morgan('tiny'))
 
 
-morgan.token('postData', (req, res) => {
-    if (req.method === 'POST') {
-        return JSON.stringify(req.body); // Log the body of POST requests
-    }
-    return ''; // For other methods, return an empty string
-});
+morgan.token('postData', (req) => {
+  if (req.method === 'POST') {
+    return JSON.stringify(req.body)
+  }
+  return '' 
+})
 
-app.use(morgan(':method :url :status :postData'));
+app.use(morgan(':method :url :status :postData'))
 
 
 app.get('/', (request, response) => {
@@ -27,10 +27,10 @@ app.get('/', (request, response) => {
 })
 
 app.get('/info', (request, response, next) => {
-    const currentDate = new Date().toLocaleString();
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const currentDate = new Date().toLocaleString()
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-    Person.countDocuments()  // Counts all documents in the 'Person' collection
+  Person.countDocuments()
     .then(count => {
       response.send(`
         <div>
@@ -38,35 +38,35 @@ app.get('/info', (request, response, next) => {
         </div>
         <div>
           <p>${currentDate} (${timeZone})</p>
-        </div>`);
+        </div>`)
     }). catch(error=> next(error))
-  })
+})
 
 app.put('/api/persons/:id',(request, response, next)=>{
 
-    const personName = request.body.name
-    const personNumber = request.body.number
-    const personId = Math.floor(Math.random()*10000).toString();
+  const personName = request.body.name
+  const personNumber = request.body.number
+  
 
-    if(!personName || !personNumber){
-        return response.status(400).json({
-            error: "Person name or number missing."
-        })
-    }
+  if(!personName || !personNumber){
+    return response.status(400).json({
+      error: 'Person name or number missing.'
+    })
+  }
     
-    Person.find({_id:request.params.id}).then(exists=>{
+  Person.find({_id:request.params.id}).then(exists=>{
 
-      if(exists.length > 0){
+    if(exists.length > 0){
 
-        let person = new Person({
-          name: personName,
-          number: personNumber
-        })
-        person.save().then(result=> response.json(result)).catch(error=>(next(error)))
+      let person = new Person({
+        name: personName,
+        number: personNumber
+      })
+      person.save().then(result=> response.json(result)).catch(error=>(next(error)))
     }
 
 
-    }).catch(error=>(next(error)))
+  }).catch(error=>(next(error)))
 
 })
 
@@ -81,36 +81,36 @@ app.get('/api/persons/:id', (request, response, next) => {
     .then((person) => {
       if (!person) {
         return response.status(404).json({
-          error: "Person not found.",
-        });
+          error: 'Person not found.',
+        })
       }
 
-      console.log(person);
-      response.json(person);
+      console.log(person)
+      response.json(person)
     })
     .catch((error) => {
       next(error)
-    });
-});
+    })
+})
 
 app.post('/api/persons', (request, response, next) => {
 
-    const personName = request.body.name
-    const personNumber = request.body.number
-    const personId = Math.floor(Math.random()*10000).toString();
+  const personName = request.body.name
+  const personNumber = request.body.number
+  
 
-    if(!personName || !personNumber){
-        return response.status(400).json({
-            error: "Person name or number missing."
-        })
-    }
+  if(!personName || !personNumber){
+    return response.status(400).json({
+      error: 'Person name or number missing.'
+    })
+  }
     
-    Person.find({name:personName}).then(exists=>{
+  Person.find({name:personName}).then(exists=>{
 
-      if(exists.length > 0){
-        return response.status(400).json({
-            error: `${personName} already exists in the phonebook.`
-        })
+    if(exists.length > 0){
+      return response.status(400).json({
+        error: `${personName} already exists in the phonebook.`
+      })
     }
     
     let person = new Person({
@@ -120,25 +120,25 @@ app.post('/api/persons', (request, response, next) => {
 
     person.save().then(result=> response.json(result)).catch(error=>(next(error)))
 
-    }).catch(error=>(next(error)))
+  }).catch(error=>(next(error)))
 
     
-  })
+})
 
 app.delete('/api/persons/:id', (request, response, next)=>{
 
-    const Id = request.params.id
-    Person.findOneAndDelete({_id:Id}).then(result=>{
+  const Id = request.params.id
+  Person.findOneAndDelete({_id:Id}).then(result=>{
 
-      if(!result){
-        return response.status(400).json({
-            error: "Person not found."
-        })
+    if(!result){
+      return response.status(400).json({
+        error: 'Person not found.'
+      })
     }
     
     response.json(result)
         
-    }).catch(error=>next(error))
+  }).catch(error=>next(error))
   
 })
 
