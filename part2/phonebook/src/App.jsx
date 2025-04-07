@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+
 import personService from './services/person'
 import './index.css'
 
@@ -48,16 +48,23 @@ const FilteredPersons = (props) => {
   )
 }
 
-const Notification = ({message}) => {
-  if (message === null){
+const Notification = ({message , error}) => {
+  if (message === null && error === null){
     return null
   }
 
+  if (error) {
+    return (
+      <div className="failure">
+        {error}
+      </div>
+    );
+  }
   return (
-   <div className='success'>
-    {message}
-   </div>
-  )
+    <div className="success">
+      {message}
+    </div>
+  );
 }
 
 const App = () => {
@@ -95,6 +102,12 @@ const App = () => {
           setTimeout(()=>{setMessage(null)},5000)
         }
           
+        ).catch(
+          ()=>{
+            setError(`Error: ${error.message}`)
+            setTimeout(()=>{setMessage(null)},5000)
+          }
+
         )
       } else{
         console.log("cancelled update")
@@ -115,6 +128,12 @@ const App = () => {
       setTimeout(()=>{setMessage(null)},5000)
     }
       
+    ).catch(
+      ()=>{
+        setError(`Error: ${error.message}`)
+        setTimeout(()=>{setMessage(null)},5000)
+      }
+
     )
 
     
@@ -127,6 +146,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   const handleSearch = (event) =>{
     setSearch(event.target.value)
@@ -165,7 +185,7 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
 
-      <Notification message={message} />
+      <Notification message={message} error={error} />
      
       <Filter value = {search} onChange = {handleSearch} />
       <PersonForm onSubmit = {addPerson} nameValue = {newName} phoneValue = {newPhone} onNameChange = {addNewName} onPhoneChange = {addNewPhone} />
