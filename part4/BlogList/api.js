@@ -5,7 +5,12 @@ const logger = require('./utils/logger')
 const express = require('express')
 const mongoose = require('mongoose')
 
+const middlew = require('./utils/middleware')
+
+const loginRouter = require('./controllers/login')
 const blogsRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
+
 
 
 const app = express()
@@ -23,13 +28,15 @@ if(process.env.NODE_ENV === 'test'){
 
 app.use(express.json())
 
-app.use('/api/blogs', blogsRouter)
+app.use(middlew.tokenExtractor)
+app.use(middlew.userExtractor)
 
-app.use((err, req, res, next)=>{
-    console.error(err)
-    res.status(500).json({message: 'Something went wrong'})
-  
-  })
+
+app.use('/api/login', loginRouter)
+app.use('/api/blogs', blogsRouter)
+app.use('/api/users', usersRouter)
+
+app.use(middlew.errorHandler)
 
 module.exports = app
 

@@ -1,15 +1,20 @@
+const jwt = require('jsonwebtoken')
 
 const blogsRouter = require('express').Router()
-// const asyncHandler = require('async-handler') // automatically sends exceptions to error handling middlleware. will allow us to avoid writing try-catch blocks
+
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 
-// Simple async handler if you don't have express-async-handler
 const asyncHandler = fn => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
+
+
 blogsRouter.get('/', asyncHandler (async (request, response) => {
+
+  
   
   const blogs = await Blog.find({})
   response.json(blogs)
@@ -18,9 +23,17 @@ blogsRouter.get('/', asyncHandler (async (request, response) => {
   
 blogsRouter.post('/', asyncHandler (async (request, response) => {
   
+  const user = request.user
+
+  if (!user) {
+    return response.status(401).json({ error: 'authentication required' })
+  }
+
   let blog = new Blog({
     ...request.body,
-    likes: request.body.likes || 0
+    likes: request.body.likes || 0,
+    user: user._id
+
   })
 
   if (!blog.title || !blog.url){
@@ -28,7 +41,9 @@ blogsRouter.post('/', asyncHandler (async (request, response) => {
     return response.status(400).end()
   }
 
-    await blog.save()
+    const savedBlog = await blog.save()
+    user.blogs = user.blogs.concat(savedBlog._id)
+  await user.save()
     response.status(201).json(blog)
     
   }));
@@ -38,34 +53,45 @@ blogsRouter.post('/', asyncHandler (async (request, response) => {
     const {id} = request.params
 
     console.log(`about to delete id: ${id}`)
-    const blog = await Blog.findByIdAndDelete(id)
-    if (blog) {
-      response.status(204).end();
-    } else {
-      response.status(404).json({ error: 'Blog not found' });
+
+    const decodedToken = jwt.verify(request.token, process.env.SECRET)
+
+    if (!request.token || !decodedToken.id) {
+      return response.status(401).json({ error: 'token missing or invalid' })
     }
-    
+
+    const blog = await Blog.findByIdAndDelete(id)
+
+    if (!blog) {
+      return response.status(404).json({ error: 'Blog not found' })
+    }
+    if (blog.user.toString() !== decodedToken.id.toString()) {
+      return response.status(403).json({ error: 'only the creator can delete this blog' })
+    }
+    await Blog.findByIdAndDelete(id)
+    response.status(204).end()
     
   }));
 
 
   blogsRouter.put('/:id', asyncHandler(async (request, response) => {
+
+
+    
     const { id } = request.params;
-    const { title, author, url, likes } = request.body;
+    const { title, author, url, likes, user } = request.body;
   
     const blogToUpdate = {
       title,
       author,
       url,
-      likes
+      likes,
+      user
     };
-  
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
-      blogToUpdate,
-      { new: true, runValidators: true }
+      blogToUpdate
     );
-  
     if (updatedBlog) {
       response.json(updatedBlog);
     } else {
